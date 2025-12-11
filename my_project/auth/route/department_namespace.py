@@ -26,14 +26,19 @@ class DepartmentList(Resource):
         return [department.to_dict() for department in departments]
 
     @department_ns.doc('create_department')
-    @department_ns.expect(department_input_model)
+    @department_ns.expect(department_input_model, validate=True)
     @department_ns.marshal_with(department_model, code=201)
     def post(self):
         """Створити нове відділення"""
         data = department_ns.payload
+        if not data:
+            department_ns.abort(400, 'Відсутні дані для створення відділення')
+        
         result = department_service.create_department(data)
         if isinstance(result, dict) and 'error' in result:
             department_ns.abort(400, result['error'])
+        if not result:
+            department_ns.abort(500, 'Помилка при створенні відділення')
         return result.to_dict(), 201
 
 @department_ns.route('/<int:department_id>')
@@ -48,7 +53,7 @@ class Department(Resource):
         return department.to_dict()
 
     @department_ns.doc('update_department')
-    @department_ns.expect(department_input_model)
+    @department_ns.expect(department_input_model, validate=False)
     @department_ns.marshal_with(department_model)
     def put(self, department_id):
         """Оновити відділення"""

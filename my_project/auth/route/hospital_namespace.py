@@ -31,14 +31,19 @@ class HospitalList(Resource):
         return [hospital.to_dict() for hospital in hospitals]
 
     @hospital_ns.doc('create_hospital')
-    @hospital_ns.expect(hospital_input_model)
+    @hospital_ns.expect(hospital_input_model, validate=True)
     @hospital_ns.marshal_with(hospital_model, code=201)
     def post(self):
         """Створити нову лікарню"""
         data = hospital_ns.payload
+        if not data:
+            hospital_ns.abort(400, 'Відсутні дані для створення лікарні')
+        
         result = hospital_service.create_hospital(data)
         if isinstance(result, dict) and 'error' in result:
             hospital_ns.abort(400, result['error'])
+        if not result:
+            hospital_ns.abort(500, 'Помилка при створенні лікарні')
         return result.to_dict(), 201
 
 @hospital_ns.route('/<int:hospital_id>')
@@ -53,7 +58,7 @@ class Hospital(Resource):
         return hospital.to_dict()
 
     @hospital_ns.doc('update_hospital')
-    @hospital_ns.expect(hospital_input_model)
+    @hospital_ns.expect(hospital_input_model, validate=False)
     @hospital_ns.marshal_with(hospital_model)
     def put(self, hospital_id):
         """Оновити лікарню"""

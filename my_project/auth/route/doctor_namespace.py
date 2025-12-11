@@ -35,14 +35,19 @@ class DoctorList(Resource):
         return [doctor.to_dict() for doctor in doctors]
 
     @doctor_ns.doc('create_doctor')
-    @doctor_ns.expect(doctor_input_model)
+    @doctor_ns.expect(doctor_input_model, validate=True)
     @doctor_ns.marshal_with(doctor_model, code=201)
     def post(self):
         """Створити нового лікаря"""
         data = doctor_ns.payload
+        if not data:
+            doctor_ns.abort(400, 'Відсутні дані для створення лікаря')
+        
         result = doctor_service.create_doctor(data)
         if isinstance(result, dict) and 'error' in result:
             doctor_ns.abort(400, result['error'])
+        if not result:
+            doctor_ns.abort(500, 'Помилка при створенні лікаря')
         return result.to_dict(), 201
 
 @doctor_ns.route('/<int:doctor_id>')
@@ -57,7 +62,7 @@ class Doctor(Resource):
         return doctor.to_dict()
 
     @doctor_ns.doc('update_doctor')
-    @doctor_ns.expect(doctor_input_model)
+    @doctor_ns.expect(doctor_input_model, validate=False)
     @doctor_ns.marshal_with(doctor_model)
     def put(self, doctor_id):
         """Оновити лікаря"""

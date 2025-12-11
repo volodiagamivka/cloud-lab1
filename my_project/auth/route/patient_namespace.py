@@ -40,14 +40,26 @@ class PatientList(Resource):
         return [patient.to_dict() for patient in patients]
 
     @patient_ns.doc('create_patient')
-    @patient_ns.expect(patient_input_model)
+    @patient_ns.expect(patient_input_model, validate=True)
     @patient_ns.marshal_with(patient_model, code=201)
     def post(self):
         """Створити нового пацієнта"""
         data = patient_ns.payload
+        if not data:
+            patient_ns.abort(400, 'Відсутні дані для створення пацієнта')
+        
+        # Конвертація дати
+        if 'date_of_birthday' in data:
+            try:
+                data['date_of_birthday'] = datetime.strptime(data['date_of_birthday'], '%Y-%m-%d').date()
+            except ValueError:
+                patient_ns.abort(400, 'Неправильний формат дати. Використовуйте YYYY-MM-DD.')
+        
         result = patient_service.create_patient(data)
         if isinstance(result, dict) and 'error' in result:
             patient_ns.abort(400, result['error'])
+        if not result:
+            patient_ns.abort(500, 'Помилка при створенні пацієнта')
         return result.to_dict(), 201
 
 @patient_ns.route('/<int:patient_id>')
@@ -62,7 +74,7 @@ class Patient(Resource):
         return patient.to_dict()
 
     @patient_ns.doc('update_patient')
-    @patient_ns.expect(patient_input_model)
+    @patient_ns.expect(patient_input_model, validate=False)
     @patient_ns.marshal_with(patient_model)
     def put(self, patient_id):
         """Оновити пацієнта"""

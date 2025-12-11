@@ -6,7 +6,7 @@ import random
 from datetime import datetime
 import sys
 
-API_BASE_URL = "https://hospital-app.proudmoss-92083201.eastus.azurecontainerapps.io/api/v1"
+API_BASE_URL = "https://boychuk-repos-app.gentlestone-f764c01b.polandcentral.azurecontainerapps.io/api/v1"
 
 class LoadGenerator:
     def __init__(self, base_url, num_threads=20, duration=300):
