@@ -1,0 +1,33 @@
+name: Test API Endpoints
+
+on:
+  push:
+    branches: [lab5]
+  pull_request:
+    branches: [lab5]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test API endpoints
+        run: |
+          echo "🧪 Testing API endpoints..."
+
+          # Wait for service to start
+          sleep 30
+
+          # Test patients endpoint
+          curl -f http://74.249.104.193:5000/api/v1/patients/ || exit 1
+
+          # Test hospitals endpoint  
+          curl -f http://74.249.104.193:5000/api/v1/hospitals/ || exit 1
+
+          # Test doctors endpoint
+          curl -f http://74.249.104.193:5000/api/v1/doctors/ || exit 1
+
+          echo "✅ All tests passed!"

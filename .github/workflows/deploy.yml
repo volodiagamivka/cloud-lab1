@@ -1,0 +1,37 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches: [lab5]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USERNAME }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          port: 22
+          script: |
+            echo " Starting deployment..."
+            cd ~/database-flask
+
+            echo " Pulling latest changes..."
+            git fetch origin
+            git reset --hard origin/lab5
+
+            echo " Restarting service..."
+            sudo systemctl restart hospital-app
+
+            echo "Checking service status..."
+            sudo systemctl status hospital-app --no-pager
+
+            echo " Deployment completed!"
