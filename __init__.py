@@ -31,10 +31,10 @@ def create_app():
         app, 
         version='1.0',
         title='Hospital Management API',
-        description='API для управління лікарнею, пацієнтами, лікарями та медикаментами',
+        description='API for managing hospitals, patients, doctors, and medications',
         doc='/swagger/',
         prefix='/api/v1',
-        validate=True  # Вмикаємо валідацію за замовчуванням
+        validate=True
     )
     
     from my_project.auth.models import (

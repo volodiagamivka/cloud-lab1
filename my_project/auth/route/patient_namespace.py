@@ -5,27 +5,27 @@ from flask_restx import Namespace, Resource, fields
 from my_project.auth.service.PatientService import PatientService
 from datetime import datetime
 
-# Створюємо namespace
-patient_ns = Namespace('patients', description='Операції з пацієнтами')
+# Create namespace
+patient_ns = Namespace('patients', description='Patient operations')
 
-# Моделі для Swagger документації
+# Models for Swagger documentation
 patient_model = patient_ns.model('Patient', {
-    'patients_id': fields.Integer(readonly=True, description='ID пацієнта'),
-    'first_name': fields.String(required=True, description='Ім\'я'),
-    'last_name': fields.String(required=True, description='Прізвище'),
-    'date_of_birthday': fields.String(required=True, description='Дата народження (YYYY-MM-DD)'),
-    'gender': fields.String(required=True, description='Стать'),
-    'address': fields.String(required=True, description='Адреса'),
-    'phone': fields.String(required=True, description='Телефон')
+    'patients_id': fields.Integer(readonly=True, description='Patient ID'),
+    'first_name': fields.String(required=True, description='First name'),
+    'last_name': fields.String(required=True, description='Last name'),
+    'date_of_birthday': fields.String(required=True, description='Date of birth (YYYY-MM-DD)'),
+    'gender': fields.String(required=True, description='Gender'),
+    'address': fields.String(required=True, description='Address'),
+    'phone': fields.String(required=True, description='Phone number')
 })
 
 patient_input_model = patient_ns.model('PatientInput', {
-    'first_name': fields.String(required=True, description='Ім\'я'),
-    'last_name': fields.String(required=True, description='Прізвище'),
-    'date_of_birthday': fields.String(required=True, description='Дата народження (YYYY-MM-DD)'),
-    'gender': fields.String(required=True, description='Стать'),
-    'address': fields.String(required=True, description='Адреса'),
-    'phone': fields.String(required=True, description='Телефон')
+    'first_name': fields.String(required=True, description='First name'),
+    'last_name': fields.String(required=True, description='Last name'),
+    'date_of_birthday': fields.String(required=True, description='Date of birth (YYYY-MM-DD)'),
+    'gender': fields.String(required=True, description='Gender'),
+    'address': fields.String(required=True, description='Address'),
+    'phone': fields.String(required=True, description='Phone number')
 })
 
 patient_service = PatientService()
@@ -35,7 +35,7 @@ class PatientList(Resource):
     @patient_ns.doc('get_all_patients')
     @patient_ns.marshal_list_with(patient_model)
     def get(self):
-        """Отримати список всіх пацієнтів"""
+        """Get list of all patients"""
         patients = patient_service.get_all_patients()
         return [patient.to_dict() for patient in patients]
 
@@ -43,23 +43,23 @@ class PatientList(Resource):
     @patient_ns.expect(patient_input_model, validate=True)
     @patient_ns.marshal_with(patient_model, code=201)
     def post(self):
-        """Створити нового пацієнта"""
+        """Create a new patient"""
         data = patient_ns.payload
         if not data:
-            patient_ns.abort(400, 'Відсутні дані для створення пацієнта')
+            patient_ns.abort(400, 'Missing data for patient creation')
         
-        # Конвертація дати
+        # Date conversion
         if 'date_of_birthday' in data:
             try:
                 data['date_of_birthday'] = datetime.strptime(data['date_of_birthday'], '%Y-%m-%d').date()
             except ValueError:
-                patient_ns.abort(400, 'Неправильний формат дати. Використовуйте YYYY-MM-DD.')
+                patient_ns.abort(400, 'Invalid date format. Use YYYY-MM-DD.')
         
         result = patient_service.create_patient(data)
         if isinstance(result, dict) and 'error' in result:
             patient_ns.abort(400, result['error'])
         if not result:
-            patient_ns.abort(500, 'Помилка при створенні пацієнта')
+            patient_ns.abort(500, 'Error creating patient')
         return result.to_dict(), 201
 
 @patient_ns.route('/<int:patient_id>')
@@ -67,38 +67,38 @@ class Patient(Resource):
     @patient_ns.doc('get_patient')
     @patient_ns.marshal_with(patient_model)
     def get(self, patient_id):
-        """Отримати пацієнта за ID"""
+        """Get patient by ID"""
         patient = patient_service.get_patient_by_id(patient_id)
         if not patient:
-            patient_ns.abort(404, 'Пацієнт не знайдений')
+            patient_ns.abort(404, 'Patient not found')
         return patient.to_dict()
 
     @patient_ns.doc('update_patient')
     @patient_ns.expect(patient_input_model, validate=False)
     @patient_ns.marshal_with(patient_model)
     def put(self, patient_id):
-        """Оновити пацієнта"""
+        """Update patient"""
         data = patient_ns.payload
         
-        # Конвертація дати
+        # Date conversion
         if 'date_of_birthday' in data:
             try:
                 data['date_of_birthday'] = datetime.strptime(data['date_of_birthday'], '%Y-%m-%d').date()
             except ValueError:
-                patient_ns.abort(400, 'Неправильний формат дати. Використовуйте YYYY-MM-DD.')
+                patient_ns.abort(400, 'Invalid date format. Use YYYY-MM-DD.')
         
         result = patient_service.update_patient(patient_id, data)
         if isinstance(result, dict) and 'error' in result:
             patient_ns.abort(400, result['error'])
         if not result:
-            patient_ns.abort(404, 'Пацієнт не знайдений')
+            patient_ns.abort(404, 'Patient not found')
         return result.to_dict()
 
     @patient_ns.doc('delete_patient')
     def delete(self, patient_id):
-        """Видалити пацієнта"""
+        """Delete patient"""
         success = patient_service.delete_patient(patient_id)
         if not success:
-            patient_ns.abort(404, 'Пацієнт не знайдений')
-        return {'message': 'Пацієнт успішно видалений'}, 200
+            patient_ns.abort(404, 'Patient not found')
+        return {'message': 'Patient successfully deleted'}, 200
 
