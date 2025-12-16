@@ -2,7 +2,7 @@ name: Deploy to Azure VM
 
 on:
   push:
-    branches: [lab5]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -21,17 +21,32 @@ jobs:
           key: ${{ secrets.AZURE_SSH_KEY }}
           port: 22
           script: |
-            echo " Starting deployment..."
-            cd ~/database-flask
+            echo "Starting deployment..."
+            cd ~/database-flask || cd ~/hospital-api || { echo " Directory not found!"; exit 1; }
 
-            echo " Pulling latest changes..."
+            echo "Pulling latest changes..."
             git fetch origin
-            git reset --hard origin/lab5
+            git reset --hard origin/main  # Змініть на вашу гілку
+
+            echo "📦 Installing/updating dependencies..."
+            if [ -d "venv" ]; then
+              source venv/bin/activate
+              pip install --upgrade pip
+              pip install -r requirements.txt
+            else
+              python3 -m venv venv
+              source venv/bin/activate
+              pip install --upgrade pip
+              pip install -r requirements.txt
+            fi
 
             echo " Restarting service..."
-            sudo systemctl restart hospital-app
+            sudo systemctl restart hospital-app || sudo systemctl restart hospital-api
+
+            echo "Waiting for service to start..."
+            sleep 5
 
             echo "Checking service status..."
-            sudo systemctl status hospital-app --no-pager
+            sudo systemctl status hospital-app --no-pager || sudo systemctl status hospital-api --no-pager
 
-            echo " Deployment completed!"
+            echo "Deployment completed!"
